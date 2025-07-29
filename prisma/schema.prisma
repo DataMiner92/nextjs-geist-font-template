@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model DigitalHub {
+  id          Int      @id @default(autoincrement())
+  name        String
+  location    String
+  latitude    Float?
+  longitude   Float?
+  managerId   Int?
+  status      String   @default("active") // active, inactive, maintenance
+  description String?
+  assets      Asset[]
+  manager     User?    @relation(fields: [managerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("digital_hubs")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  role      String   // admin, manager, viewer
+  phone     String?
+  managedHubs DigitalHub[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Asset {
+  id          Int        @id @default(autoincrement())
+  name        String
+  type        String     // computer, router, printer, etc.
+  model       String?
+  serialNumber String?
+  status      String     @default("active") // active, maintenance, broken, retired
+  hubId       Int
+  hub         DigitalHub @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  purchaseDate DateTime?
+  warrantyExpiry DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("assets")
+}
+
+model ImpactMetric {
+  id              Int      @id @default(autoincrement())
+  hubId           Int?
+  youthsTrained   Int      @default(0)
+  youthsEarning   Int      @default(0)
+  impactStories   Int      @default(0)
+  skillsOffered   String?  // JSON string of skills
+  ageGroup        String?  // 18-25, 26-35, etc.
+  gender          String?  // male, female, other
+  recordedAt      DateTime @default(now())
+  period          String   // monthly, quarterly, yearly
+  
+  @@map("impact_metrics")
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  title       String
+  type        String   // hub_summary, impact_report, asset_report
+  format      String   // pdf, excel, word
+  data        String   // JSON string of report data
+  generatedBy String
+  createdAt   DateTime @default(now())
+
+  @@map("reports")
+}
